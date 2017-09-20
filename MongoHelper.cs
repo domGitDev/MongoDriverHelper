@@ -13,7 +13,7 @@ using MongoDB.Driver.GridFS;
 using ONEsVIBE.iOS;
 using MongoDB.Bson.Serialization;
 
-namespace ONEsVIBE.Mongo
+namespace TestApp.Mongo
 {
     public class MongoHelper
     {
