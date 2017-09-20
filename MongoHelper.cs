@@ -10,7 +10,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 
-using ONEsVIBE.iOS;
+using TestApp.iOS;
 using MongoDB.Bson.Serialization;
 
 namespace TestApp.Mongo
