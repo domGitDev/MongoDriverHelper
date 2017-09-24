@@ -10,7 +10,6 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 
-using TestApp.iOS;
 using MongoDB.Bson.Serialization;
 
 namespace TestApp.Mongo
@@ -263,23 +262,15 @@ namespace TestApp.Mongo
         }
 
 
-		public async Task<List<T>> FindByPropertyAsync<T>(
-			string propertyValue, string propertyName, string collectionName)
-		{
-			var collection = database.GetCollection<T>(collectionName);
-			var filter = new BsonDocument(propertyName, propertyValue);
-			var cursor = await collection.FindAsync<T>(filter);
-			return await cursor.ToListAsync<T>();
-		}
-
-
-        public static string MediaTempFilename(string dirname, string ext = "jpg")
-        {
-            var dataPath = FileAccessHelper.GetLocalFilePath(dirname, true);
-            var filename = Path.GetFileName(Path.GetTempFileName());
-            return Path.Combine(dataPath, string.Format("{0}.{1}", filename, ext.Replace(".", "")));
-        }
-
+	public async Task<List<T>> FindByPropertyAsync<T>(
+		string propertyValue, string propertyName, string collectionName)
+	{
+		var collection = database.GetCollection<T>(collectionName);
+		var filter = new BsonDocument(propertyName, propertyValue);
+		var cursor = await collection.FindAsync<T>(filter);
+		return await cursor.ToListAsync<T>();
+	}
+s
 
         public static async Task<bool> CreateUserAccount(string username, string password, string email, string gender)
         {
