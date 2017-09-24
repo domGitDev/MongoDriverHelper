@@ -263,13 +263,14 @@ namespace TestApp.Mongo
         }
 
 
-        public async Task<List<UserData>> FindeUser(string username, string collectionName = "usersdata")
-        {
-            var collection = database.GetCollection<UserData>(collectionName);
-            var filter = Builders<UserData>.Filter.Where(x => x.Username == username);
-            var cursor = await collection.FindAsync<UserData>(filter);
-            return await cursor.ToListAsync<UserData>();
-        }
+		public async Task<List<T>> FindByPropertyAsync<T>(
+			string propertyValue, string propertyName, string collectionName)
+		{
+			var collection = database.GetCollection<T>(collectionName);
+			var filter = new BsonDocument(propertyName, propertyValue);
+			var cursor = await collection.FindAsync<T>(filter);
+			return await cursor.ToListAsync<T>();
+		}
 
 
         public static string MediaTempFilename(string dirname, string ext = "jpg")
