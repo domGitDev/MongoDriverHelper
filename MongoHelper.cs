@@ -199,7 +199,7 @@ namespace TestApp.Mongo
         }
 
 
-        public async Task<ObjectId> UploadStreamAsync(Stream stream, string bucketname, int chuncksSize = 64512)
+        public async Task<ObjectId> UploadStreamAsync(Stream stream, string bucketname, string outpath, int chuncksSize = 64512)
         {
             ObjectId id = ObjectId.Empty;
 
@@ -208,8 +208,8 @@ namespace TestApp.Mongo
                 ChunkSizeBytes = chuncksSize,
                 BucketName = bucketname
             });
-            var path = MediaTempFilename(APP_TEMP_DIR, "jpg");
-            using (var writestream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
+            
+            using (var writestream = new FileStream(outpath, FileMode.OpenOrCreate, FileAccess.Write))
             {
                 var size = stream.Length;
                 var buffer = new byte[size];
