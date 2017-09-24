@@ -25,5 +25,12 @@ namespace TestApp.iOS
             
             return filepath;
         }
+        
+        public static string MediaTempFilename(string dirname, string ext = "jpg")
+        {
+            var dataPath = FileAccessHelper.GetLocalFilePath(dirname, true);
+            var filename = Path.GetFileName(Path.GetTempFileName());
+            return Path.Combine(dataPath, string.Format("{0}.{1}", filename, ext.Replace(".", "")));
+        }
     }
 }
