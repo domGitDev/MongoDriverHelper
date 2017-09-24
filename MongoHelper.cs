@@ -159,7 +159,7 @@ namespace TestApp.Mongo
         }
 
 
-        public async Task<List<T>> GetPostsAsync<T>(string collectionName, string sortByAttribute = "PostTime")
+        public async Task<List<T>> GetPostsAsync<T>(string collectionName, string sortByAttribute)
         {
             var sort = Builders<T>.Sort.Descending(sortByAttribute);
             var options = new FindOptions<T>
@@ -222,7 +222,7 @@ namespace TestApp.Mongo
         }
 
 
-        public async Task<bool> DownloadFileAsync(ObjectId id, Stream OutStrem, string bucketname = "voices")
+        public async Task<bool> DownloadFileAsync(ObjectId id, Stream OutStrem, string bucketname)
         {
             var bucket = new GridFSBucket(database, new GridFSBucketOptions
             {
@@ -240,7 +240,7 @@ namespace TestApp.Mongo
         }
 
 
-        public async Task<bool> DownloadFileAsync(ObjectId id, string outpath, string bucketname = "voices")
+        public async Task<bool> DownloadFileAsync(ObjectId id, string outpath, string bucketname)
         {
             var bucket = new GridFSBucket(database, new GridFSBucketOptions
             {
