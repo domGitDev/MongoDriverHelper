@@ -98,8 +98,6 @@ namespace ONEsVIBE.Mongo
 
             instance = new MongoHelper();
 
-            isconnected = false;
-
             MongoClientSettings settings = MongoClientSettings.FromUrl(new MongoUrl(connectionString));
             client = new MongoClient(settings);
 
@@ -128,7 +126,7 @@ namespace ONEsVIBE.Mongo
 
             while (timeOut > 0)
             {
-                if (client.Cluster.Description.State == MongoDB.Driver.Core.Clusters.ClusterState.Connected)
+                if (isConnected)
                 {
                     database = client.GetDatabase(databaseName);
                     isconnected = true;
