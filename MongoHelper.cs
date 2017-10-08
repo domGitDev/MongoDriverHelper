@@ -10,21 +10,20 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 
+using ONEsVIBE.iOS;
 using MongoDB.Bson.Serialization;
 
-namespace TestApp.Mongo
+namespace ONEsVIBE.Mongo
 {
     public class MongoHelper
     {
-        private const string server = "YOUR SERVER";
-        private const int port = 0000; //YOUR PORT NUMBER
-        private const string databaseName = "YOUR DBNAME";
-        private const string APP_TEMP_DIR = "YOUR APP TEMP DIR";
+        private const string server = "SERVER_ADDRESS";
+        private const int port = PORT_NUMBER;
+        private const string databaseName = "DB_NAME";
 
         private static MongoHelper instance;
         private static MongoClient client;
         private static IMongoDatabase database;
-        private static bool isconnected = false;
 
         public string StatusMessage { get; set; }
 
@@ -57,7 +56,7 @@ namespace TestApp.Mongo
         }
 
 
-        private static MongoClient ConnectUsingCredential(string dbname, string user, string password)
+        private static MongoClient ConnectUsingCredential(string dbname, string user, string password, int tryCount=2)
         {
             var identity = new MongoInternalIdentity(dbname, user);
             var evidence = new PasswordEvidence(password);
@@ -67,10 +66,21 @@ namespace TestApp.Mongo
             {
                 Credentials = new[] { credential },
                 Server = new MongoServerAddress(server, port),
-                ServerSelectionTimeout = TimeSpan.FromSeconds(5)
+                ServerSelectionTimeout = TimeSpan.FromSeconds(10)
 			};
 
-			return new MongoClient(settings);
+            MongoClient clientInstance = null;
+            try
+            {
+                clientInstance = new MongoClient(settings);
+            }
+            catch(MongoClientException e)
+            {
+                if(tryCount > 0)
+                    ConnectUsingCredential(dbname, user, password, tryCount-1);
+                Console.WriteLine(e.ToString());
+            }
+            return clientInstance;
         }
 
 
@@ -92,30 +102,29 @@ namespace TestApp.Mongo
 
             MongoClientSettings settings = MongoClientSettings.FromUrl(new MongoUrl(connectionString));
             client = new MongoClient(settings);
+
         }
 
 
-        public static void InitializeWithCredential(string dbname, string user, string password, bool force = false)
-        {
-          // TODO: dispose any existing connection
-          if (!force && instance != null)
-          {
-            CloseConnection();
-            return;
-          }
+		public static void InitializeWithCredential(string dbname, string user, string password, bool force = false)
+		{
+			// TODO: dispose any existing connection
+			if (!force && instance != null)
+			{
+				CloseConnection();
+				return;
+			}
 
-          instance = new MongoHelper();
-
-          isconnected = false;
-                client = ConnectUsingCredential(dbname, user, password);
-        }
+			instance = new MongoHelper();
+            		client = ConnectUsingCredential(dbname, user, password);
+		}
 
 
         public async Task WaitConnectionTimeoutAsync()
         {
             if (client == null)
                 return;
-            int timeOut = 5;
+            int timeOut = 10;
 
             while (timeOut > 0)
             {
@@ -141,7 +150,9 @@ namespace TestApp.Mongo
         {
             get
             {
-                return isconnected;
+                if (client != null)
+                    return client.Cluster.Description.State == MongoDB.Driver.Core.Clusters.ClusterState.Connected;
+                return false;
             }
         }
 
@@ -173,11 +184,31 @@ namespace TestApp.Mongo
         }
 
 
-        public static void CloseConnection()
+		public async Task<List<T>> FindByPropertyAsync<T>(
+				string propertyValue, string propertyName, string collectionName)
+		{
+			var collection = database.GetCollection<T>(collectionName);
+				var filter = new BsonDocument(propertyName, propertyValue);
+			var cursor = await collection.FindAsync<T>(filter);
+			return await cursor.ToListAsync<T>();
+		}
+
+
+        public async Task<ReplaceOneResult> ReplaceOneByPropertyAsync<T>(
+			T data, string propertyValue, string propertyName, string collectionName)
+		{
+			var collection = database.GetCollection<T>(collectionName);
+			var filter = Builders<T>.Filter.Eq(propertyName, propertyValue);
+			return await collection.ReplaceOneAsync(filter, data);
+		}
+
+
+
+		public static void CloseConnection()
         {
             if (client != null && client.Cluster.Description.State == MongoDB.Driver.Core.Clusters.ClusterState.Connected)
             {
-                client.Cluster.Dispose();
+                //client.Cluster.Dispose();
                 client = null;
             }
             instance = null;
@@ -199,7 +230,8 @@ namespace TestApp.Mongo
         }
 
 
-        public async Task<ObjectId> UploadStreamAsync(Stream stream, string bucketname, string outpath, int chuncksSize = 64512)
+        public async Task<ObjectId> UploadStreamAsync(
+            Stream stream, string outpath, string bucketname, int chuncksSize = 64512)
         {
             ObjectId id = ObjectId.Empty;
 
@@ -208,7 +240,7 @@ namespace TestApp.Mongo
                 ChunkSizeBytes = chuncksSize,
                 BucketName = bucketname
             });
-            
+
             using (var writestream = new FileStream(outpath, FileMode.OpenOrCreate, FileAccess.Write))
             {
                 var size = stream.Length;
@@ -216,9 +248,9 @@ namespace TestApp.Mongo
                 await stream.ReadAsync(buffer, 0, (int)size);
                 await writestream.WriteAsync(buffer, 0, (int)size);
             }
-            if (!File.Exists(path))
+            if (!File.Exists(outpath))
                 return id;
-            return await UploadFileAsync(path, bucketname, chuncksSize);
+            return await UploadFileAsync(outpath, bucketname, chuncksSize);
         }
 
 
@@ -262,16 +294,6 @@ namespace TestApp.Mongo
         }
 
 
-	public async Task<List<T>> FindByPropertyAsync<T>(
-		string propertyValue, string propertyName, string collectionName)
-	{
-		var collection = database.GetCollection<T>(collectionName);
-		var filter = new BsonDocument(propertyName, propertyValue);
-		var cursor = await collection.FindAsync<T>(filter);
-		return await cursor.ToListAsync<T>();
-	}
-s
-
         public static async Task<bool> CreateUserAccount(string username, string password, string email, string gender)
         {
             var command = new BsonDocument {
@@ -302,28 +324,35 @@ s
 			return true;
         }
 
+
+        public async Task<List<BsonDocument>> FindUser(string username)
+        {
+			var command = new BsonDocument
+			{
+				{"usersInfo", new BsonDocument{
+						{"user", username},
+						{"db", databaseName}
+					}
+				}
+			};
+			try
+			{
+				var result = await database.RunCommandAsync<BsonDocument>(command);
+				var users = BsonSerializer.Deserialize<List<BsonDocument>>(result["users"].ToJson());
+                return users;
+			}
+			catch (MongoCommandException)
+			{
+
+			}
+            return new List<BsonDocument>();
+        }
+
 		public async Task<bool> CheckUsernameIsAvailable(string username)
 		{
-			var command = new BsonDocument
-        	{
-        		{"usersInfo", new BsonDocument{
-                        {"user", username},
-                        {"db", databaseName}
-        			}
-        		}
-        	};
-
-            try
-            {
-                var result = await database.RunCommandAsync<BsonDocument>(command);
-                var users = BsonSerializer.Deserialize<List<BsonDocument>>(result["users"].ToJson());
-                if (users.Count > 0)
-                    return false;
-            }
-            catch (MongoCommandException)
-            {
-                
-            }
+            var users = await FindUser(username);
+            if (users.Count > 0)
+                return false;
             return true;
 		}
     }
