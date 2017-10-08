@@ -116,7 +116,7 @@ namespace ONEsVIBE.Mongo
 			}
 
 			instance = new MongoHelper();
-            		client = ConnectUsingCredential(dbname, user, password);
+            client = ConnectUsingCredential(dbname, user, password);
 		}
 
 
