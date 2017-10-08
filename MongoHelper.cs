@@ -295,7 +295,7 @@ namespace Mongo
         }
 
 
-        public static async Task<bool> CreateUserAccount(string username, string password, string email, string gender)
+        public static async Task<bool> CreateUserAccount(string dbname, string username, string password, string email, string gender)
         {
             var command = new BsonDocument {
                 { "createUser", username },
@@ -308,7 +308,7 @@ namespace Mongo
                 { "roles", new BsonArray{
                         new BsonDocument{
                             {"role", "readWrite"},
-                            {"db", "onesvibedb"}
+                            {"db", dbname}
                         }
                     }
                 } 
