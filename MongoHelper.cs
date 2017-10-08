@@ -1,3 +1,6 @@
+// Author: Dom Silva
+// Email: silavdom2014@gmail.com
+
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -13,7 +16,7 @@ using MongoDB.Driver.GridFS;
 using ONEsVIBE.iOS;
 using MongoDB.Bson.Serialization;
 
-namespace ONEsVIBE.Mongo
+namespace Mongo
 {
     public class MongoHelper
     {
